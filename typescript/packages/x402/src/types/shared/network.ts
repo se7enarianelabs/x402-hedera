@@ -13,6 +13,8 @@ export const NetworkSchema = z.enum([
   "polygon",
   "polygon-amoy",
   "peaq",
+  "hedera-testnet",
+  "hedera-mainnet",
 ]);
 export type Network = z.infer<typeof NetworkSchema>;
 
@@ -48,6 +50,14 @@ export const SvmNetworkToChainId = new Map<Network, number>([
   ["solana-devnet", 103],
   ["solana", 101],
 ]);
+
+// hedera
+export const SupportedHederaNetworks: Network[] = ["hedera-testnet", "hedera-mainnet"];
+export const HederaNetworkToChainId = new Map<Network, number>([
+  ["hedera-testnet", 296],
+  ["hedera-mainnet", 295],
+]);
+
 
 export const ChainIdToNetwork = Object.fromEntries(
   [...SupportedEVMNetworks, ...SupportedSVMNetworks].map(network => [

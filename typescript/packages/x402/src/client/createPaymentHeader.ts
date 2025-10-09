@@ -1,6 +1,7 @@
 import { createPaymentHeader as createPaymentHeaderExactEVM } from "../schemes/exact/evm/client";
 import { createPaymentHeader as createPaymentHeaderExactSVM } from "../schemes/exact/svm/client";
-import { isEvmSignerWallet, isMultiNetworkSigner, isSvmSignerWallet, MultiNetworkSigner, Signer, SupportedEVMNetworks, SupportedSVMNetworks } from "../types/shared";
+import { createPaymentHeader as createPaymentHeaderExactHedera } from "../schemes/exact/hedera/client";
+import { isEvmSignerWallet, isHederaSignerWallet, isMultiNetworkSigner, isSvmSignerWallet, MultiNetworkSigner, Signer, SupportedEVMNetworks, SupportedHederaNetworks, SupportedSVMNetworks } from "../types/shared";
 import { PaymentRequirements } from "../types/verify";
 import { X402Config } from "../types/config";
 
@@ -47,6 +48,19 @@ export async function createPaymentHeader(
         x402Version,
         paymentRequirements,
         config,
+      );
+    }
+    // hedera
+    if (SupportedHederaNetworks.includes(paymentRequirements.network)) {
+      const hederaClient = isMultiNetworkSigner(client) ? client.hedera : client;
+      if (!isHederaSignerWallet(hederaClient)) {
+        throw new Error("Invalid hedera wallet client provided");
+      }
+
+      return await createPaymentHeaderExactHedera(
+        hederaClient,
+        x402Version,
+        paymentRequirements,
       );
     }
     throw new Error("Unsupported network");
