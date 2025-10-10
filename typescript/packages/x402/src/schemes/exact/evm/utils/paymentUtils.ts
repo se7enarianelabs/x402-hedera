@@ -1,4 +1,5 @@
-import { safeBase64Encode, safeBase64Decode } from "../../../../shared";
+import { safeBase64Encode } from "../../../../shared/base64";
+import { safeBase64Decode } from "../../../../shared/base64";
 import { ExactHederaPayload, SupportedHederaNetworks, SupportedEVMNetworks, SupportedSVMNetworks } from "../../../../types";
 import {
   PaymentPayload,

@@ -59,9 +59,22 @@ export const HederaNetworkToChainId = new Map<Network, number>([
 ]);
 
 
-export const ChainIdToNetwork = Object.fromEntries(
-  [...SupportedEVMNetworks, ...SupportedSVMNetworks].map(network => [
-    EvmNetworkToChainId.get(network),
-    network,
-  ]),
-) as Record<number, Network>;
+export type NetworkFamily = "evm" | "svm" | "hedera";
+
+export function getNetworkFamily(network: Network): NetworkFamily {
+  if (SupportedEVMNetworks.includes(network)) return "evm";
+  if (SupportedSVMNetworks.includes(network)) return "svm";
+  if (SupportedHederaNetworks.includes(network)) return "hedera";
+  throw new Error(`Unsupported network: ${network}`);
+}
+
+// Build a unified reverse lookup from chainId to network across all supported families
+const chainIdNetworkPairs = [
+  ...Array.from(EvmNetworkToChainId.entries()),
+  ...Array.from(SvmNetworkToChainId.entries()),
+  ...Array.from(HederaNetworkToChainId.entries()),
+] as Array<[Network, number]>;
+
+const chainIdEntries = chainIdNetworkPairs.map(([network, chainId]) => [String(chainId), network] as const);
+
+export const ChainIdToNetwork = Object.fromEntries(chainIdEntries) as unknown as Record<number, Network>;

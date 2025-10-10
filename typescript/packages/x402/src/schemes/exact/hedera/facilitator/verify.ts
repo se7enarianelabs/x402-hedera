@@ -31,9 +31,6 @@ export async function verify(
   paymentRequirements: PaymentRequirements,
 ): Promise<VerifyResponse> {
   try {
-
-    console.log("hello, im verify");
-
     // verify that the scheme and network are supported
     verifySchemesAndNetworks(payload, paymentRequirements);
 

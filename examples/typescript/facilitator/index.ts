@@ -76,16 +76,9 @@ app.get("/verify", (req: Request, res: Response) => {
 
 app.post("/verify", async (req: Request, res: Response) => {
   try {
-    console.log("hello, im verify");
     const body: VerifyRequest = req.body;
     const paymentRequirements = PaymentRequirementsSchema.parse(body.paymentRequirements);
     const paymentPayload = PaymentPayloadSchema.parse(body.paymentPayload);
-    console.log("hello, payment requirements", paymentRequirements);
-    console.log("hello, payment payload", paymentPayload);
-    console.log("hello, SupportedEVMNetworks", SupportedEVMNetworks);
-    console.log("hello, SupportedSVMNetworks", SupportedSVMNetworks);
-    console.log("hello, SupportedHederaNetworks", SupportedHederaNetworks);
-    console.log("hello, paymentRequirements.network", paymentRequirements.network);
     // use the correct client/signer based on the requested network
     // svm verify requires a Signer because it signs & simulates the txn
     // hedera verify requires a Signer because it verifies the txn
@@ -99,7 +92,6 @@ app.post("/verify", async (req: Request, res: Response) => {
         accountId: HEDERA_ACCOUNT_ID,
       });
     } else {
-      console.log("hello, invalid network", paymentRequirements.network);
       throw new Error("Invalid network");
     }
 

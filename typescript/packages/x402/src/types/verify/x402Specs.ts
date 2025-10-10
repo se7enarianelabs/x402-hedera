@@ -47,7 +47,6 @@ export const ErrorReasons = [
   "unsupported_scheme",
   "invalid_x402_version",
   "invalid_transaction_state",
-  "invalid_x402_version",
   "settle_exact_svm_block_height_exceeded",
   "settle_exact_svm_transaction_confirmation_timed_out",
   "invalid_exact_hedera_payload_transaction",
@@ -58,7 +57,6 @@ export const ErrorReasons = [
   "invalid_exact_hedera_payload_transaction_insufficient_balance",
   "settle_exact_hedera_transaction_failed",
   "settle_exact_hedera_transaction_confirmation_timeout",
-  "unsupported_scheme",
   "unexpected_settle_error",
   "unexpected_verify_error",
 ] as const;

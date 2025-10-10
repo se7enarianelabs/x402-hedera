@@ -1,0 +1,1 @@
+export type HederaAddress = `0.0.${number}`;

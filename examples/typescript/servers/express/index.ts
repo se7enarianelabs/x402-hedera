@@ -1,10 +1,10 @@
 import { config } from "dotenv";
 import express from "express";
-import { paymentMiddleware, Resource, type SolanaAddress } from "x402-express";
+import { paymentMiddleware, Resource, type SolanaAddress, type HederaAddress } from "x402-express";
 config();
 
 const facilitatorUrl = process.env.FACILITATOR_URL as Resource;
-const payTo = process.env.ADDRESS as `0x${string}` | SolanaAddress | string;
+const payTo = process.env.ADDRESS as `0x${string}` | SolanaAddress | HederaAddress;
 
 if (!facilitatorUrl || !payTo) {
   console.error("Missing required environment variables");
@@ -54,6 +54,7 @@ app.use(
           amount: "50000000",
           asset: {
             address: "hbar",
+            decimals: 8,
           },
         },
         network: "hedera-testnet",
@@ -83,7 +84,7 @@ app.get("/premium/content", (req, res) => {
 // Hedera endpoints
 app.get("/hedera-usdc", (req, res) => {
   res.send({
-    message: "You paid $0.05 with USDC on Hedera!",
+    message: "You paid $0.001 with USDC on Hedera!",
     data: {
       weather: "sunny on Hedera",
       temperature: 75,

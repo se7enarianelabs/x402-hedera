@@ -1,7 +1,7 @@
 import * as evm from "./evm/wallet";
 import * as svm from "../../shared/svm/wallet";
 import * as hedera from "../../shared/hedera/wallet";
-import { SupportedEVMNetworks, SupportedSVMNetworks, SupportedHederaNetworks } from "./network";
+import { SupportedEVMNetworks, SupportedSVMNetworks, SupportedHederaNetworks, Network } from "./network";
 import { Hex } from "viem";
 
 export type ConnectedClient = evm.ConnectedClient | svm.SvmConnectedClient | hedera.HederaConnectedClient;
@@ -14,16 +14,16 @@ export type MultiNetworkSigner = { evm: evm.EvmSigner; svm: svm.SvmSigner; heder
  * @param network - The network to connect to.
  * @returns A public client instance connected to the specified chain.
  */
-export function createConnectedClient(network: string): ConnectedClient {
-  if (SupportedEVMNetworks.find(n => n === network)) {
+export function createConnectedClient(network: Network): ConnectedClient {
+  if (SupportedEVMNetworks.includes(network)) {
     return evm.createConnectedClient(network);
   }
 
-  if (SupportedSVMNetworks.find(n => n === network)) {
+  if (SupportedSVMNetworks.includes(network)) {
     return svm.createSvmConnectedClient(network);
   }
 
-  if (SupportedHederaNetworks.find(n => n === network)) {
+  if (SupportedHederaNetworks.includes(network)) {
     return hedera.createHederaConnectedClient(network);
   }
 
@@ -38,28 +38,26 @@ export function createConnectedClient(network: string): ConnectedClient {
  * @returns A wallet client instance connected to the specified chain with the provided private key.
  */
 export function createSigner(
-  network: string,
+  network: Network,
   privateKey: Hex | string,
   options?: Record<string, any>
 ): Promise<Signer> {
   // evm
-  if (SupportedEVMNetworks.find(n => n === network)) {
+  if (SupportedEVMNetworks.includes(network)) {
     return Promise.resolve(evm.createSigner(network, privateKey as Hex));
   }
 
   // svm
-  if (SupportedSVMNetworks.find(n => n === network)) {
+  if (SupportedSVMNetworks.includes(network)) {
     return svm.createSignerFromBase58(privateKey as string);
   }
 
   // hedera
-  if (SupportedHederaNetworks.find(n => n === network)) {
+  if (SupportedHederaNetworks.includes(network)) {
     if (!options?.accountId) {
       throw new Error("Hedera signer requires an accountId in options");
     }
-    return Promise.resolve(
-      hedera.createHederaSigner(network, privateKey as string, options.accountId)
-    );
+    return Promise.resolve(hedera.createHederaSigner(network, privateKey as string, options.accountId));
   }
 
   throw new Error(`Unsupported network: ${network}`);

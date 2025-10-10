@@ -23,6 +23,7 @@ import {
   SupportedEVMNetworks,
   SupportedSVMNetworks,
   SupportedHederaNetworks,
+  HederaAddress,
 } from "x402/types";
 import { useFacilitator } from "x402/verify";
 
@@ -74,7 +75,7 @@ import { useFacilitator } from "x402/verify";
  * ```
  */
 export function paymentMiddleware(
-  payTo: Address | SolanaAddress,
+  payTo: Address | SolanaAddress | HederaAddress,
   routes: RoutesConfig,
   facilitator?: FacilitatorConfig,
   paywall?: PaywallConfig,
@@ -398,3 +399,4 @@ export type {
   RoutesConfig,
 } from "x402/types";
 export type { Address as SolanaAddress } from "@solana/kit";
+export type { HederaAddress } from "x402/types";

@@ -1,7 +1,6 @@
-import { verify as verifyExactEvm, settle as settleExactEvm } from "../schemes/exact/evm";
-import { verify as verifyExactSvm, settle as settleExactSvm } from "../schemes/exact/svm";
-import { verify as verifyExactHedera, settle as settleExactHedera } from "../schemes/exact/hedera";
+import { strategy } from "../shared/strategy";
 import { SupportedEVMNetworks, SupportedSVMNetworks, SupportedHederaNetworks } from "../types/shared";
+import { getNetworkFamily } from "../types/shared/network";
 import { X402Config } from "../types/config";
 import {
   ConnectedClient as EvmConnectedClient,
@@ -17,7 +16,7 @@ import {
 } from "../types/verify";
 import { Chain, Transport, Account } from "viem";
 import { KeyPairSigner } from "@solana/kit";
-import { HederaSigner } from "../types/shared/hedera";
+import { HederaSigner } from "../shared/hedera/wallet";
 
 
 /**
@@ -40,25 +39,20 @@ export async function verify<
   paymentRequirements: PaymentRequirements,
   config?: X402Config,
 ): Promise<VerifyResponse> {
-  // exact scheme
   if (paymentRequirements.scheme === "exact") {
-    // evm
-    if (SupportedEVMNetworks.includes(paymentRequirements.network)) {
-      return verifyExactEvm(
+    const family = getNetworkFamily(paymentRequirements.network);
+    if (family === "evm") {
+      return strategy.verify.evm(
         client as EvmConnectedClient<transport, chain, account>,
         payload,
         paymentRequirements,
       );
     }
-
-    // svm
-    if (SupportedSVMNetworks.includes(paymentRequirements.network)) {
-      return await verifyExactSvm(client as KeyPairSigner, payload, paymentRequirements, config);
+    if (family === "svm") {
+      return await strategy.verify.svm(client as KeyPairSigner, payload, paymentRequirements, config);
     }
-
-    // hedera
-    if (SupportedHederaNetworks.includes(paymentRequirements.network)) {
-      return await verifyExactHedera(client as HederaSigner, payload, paymentRequirements);
+    if (family === "hedera") {
+      return await strategy.verify.hedera(client as HederaSigner, payload, paymentRequirements);
     }
   }
 
@@ -88,25 +82,20 @@ export async function settle<transport extends Transport, chain extends Chain>(
   paymentRequirements: PaymentRequirements,
   config?: X402Config,
 ): Promise<SettleResponse> {
-  // exact scheme
   if (paymentRequirements.scheme === "exact") {
-    // evm
-    if (SupportedEVMNetworks.includes(paymentRequirements.network)) {
-      return await settleExactEvm(
+    const family = getNetworkFamily(paymentRequirements.network);
+    if (family === "evm") {
+      return await strategy.settle.evm(
         client as EvmSignerWallet<chain, transport>,
         payload,
         paymentRequirements,
       );
     }
-
-    // svm
-    if (SupportedSVMNetworks.includes(paymentRequirements.network)) {
-      return await settleExactSvm(client as KeyPairSigner, payload, paymentRequirements, config);
+    if (family === "svm") {
+      return await strategy.settle.svm(client as KeyPairSigner, payload, paymentRequirements, config);
     }
-
-    // hedera
-    if (SupportedHederaNetworks.includes(paymentRequirements.network)) {
-      return await settleExactHedera(client as HederaSigner, payload, paymentRequirements);
+    if (family === "hedera") {
+      return await strategy.settle.hedera(client as HederaSigner, payload, paymentRequirements);
     }
   }
 
