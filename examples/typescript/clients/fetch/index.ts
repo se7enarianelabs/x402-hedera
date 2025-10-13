@@ -4,6 +4,7 @@ import { decodeXPaymentResponse, wrapFetchWithPayment, createSigner, type Hex } 
 config();
 
 const privateKey = process.env.PRIVATE_KEY as Hex | string;
+const hederaAccountId = process.env.HEDERA_ACCOUNT_ID as string | undefined;
 const baseURL = process.env.RESOURCE_SERVER_URL as string; // e.g. https://example.com
 const endpointPath = process.env.ENDPOINT_PATH as string; // e.g. /weather
 const url = `${baseURL}${endpointPath}`; // e.g. https://example.com/weather
@@ -22,9 +23,12 @@ if (!baseURL || !privateKey || !endpointPath) {
  * - ENDPOINT_PATH: The path of the endpoint to call on the resource server
  */
 async function main(): Promise<void> {
-  // const signer = await createSigner("solana-devnet", privateKey); // uncomment for solana
-  const signer = await createSigner("base-sepolia", privateKey);
-  const fetchWithPayment = wrapFetchWithPayment(fetch, signer);
+  // Examples:
+  // - Solana: NETWORK=solana-devnet
+  // - EVM: NETWORK=base-sepolia
+  // - Hedera: NETWORK=hedera-testnet HEDERA_ACCOUNT_ID=0.0.xxxxx
+  const signer = await createSigner("hedera-testnet", privateKey, hederaAccountId ? { accountId: hederaAccountId } : undefined);
+  const fetchWithPayment = wrapFetchWithPayment(fetch, signer, BigInt(1 * 10 ** 8));
 
   const response = await fetchWithPayment(url, { method: "GET" });
   const body = await response.json();
