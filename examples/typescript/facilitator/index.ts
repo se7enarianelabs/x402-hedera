@@ -97,7 +97,6 @@ app.post("/verify", async (req: Request, res: Response) => {
 
     // verify
     const valid = await verify(client, paymentPayload, paymentRequirements, x402Config);
-    console.log("hello, valid", valid);
     res.json(valid);
   } catch (error) {
     console.error("error", error);
