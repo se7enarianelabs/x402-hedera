@@ -22,10 +22,6 @@ app.use(
   paymentMiddleware(
     payTo,
     {
-      "/weather": {
-        price: "$0.001",
-        network,
-      },
       "GET /hedera-usdc": {
         price: "$0.001",
         network: "hedera-testnet",

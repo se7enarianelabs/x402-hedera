@@ -5,7 +5,7 @@ import { withPaymentInterceptor, decodeXPaymentResponse, createSigner, type Hex 
 config();
 
 const privateKey = process.env.PRIVATE_KEY as Hex | string;
-// const hederaAccountId = process.env.HEDERA_ACCOUNT_ID as string;
+const hederaAccountId = process.env.HEDERA_ACCOUNT_ID as string;
 const baseURL = process.env.RESOURCE_SERVER_URL as string; // e.g. https://example.com
 const endpointPath = process.env.ENDPOINT_PATH as string; // e.g. /weather
 
@@ -24,9 +24,7 @@ if (!baseURL || !privateKey || !endpointPath) {
  *
  */
 async function main(): Promise<void> {
-  // const signer = await createSigner("solana-devnet", privateKey); // uncomment for solana
-  const signer = await createSigner("base-sepolia", privateKey);
-  // const signer = await createSigner("hedera-testnet", privateKey, { accountId: hederaAccountId });
+  const signer = await createSigner("hedera-testnet", privateKey, { accountId: hederaAccountId });
 
   const api = withPaymentInterceptor(
     axios.create({

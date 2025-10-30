@@ -20,31 +20,6 @@ app.use(
   paymentMiddleware(
     payTo,
     {
-      "GET /weather": {
-        // USDC amount in dollars
-        price: "$0.001",
-        // network: "base" // uncomment for Base mainnet
-        // network: "solana" // uncomment for Solana mainnet
-        network: "base-sepolia",
-      },
-      "/premium/*": {
-        // Define atomic amounts in any EIP-3009 token
-        price: {
-          amount: "100000",
-          asset: {
-            address: "0xabc",
-            decimals: 18,
-            // omit eip712 for Solana
-            eip712: {
-              name: "WETH",
-              version: "1",
-            },
-          },
-        },
-        // network: "base" // uncomment for Base mainnet
-        // network: "solana" // uncomment for Solana mainnet
-        network: "base-sepolia",
-      },
       "GET /hedera-usdc": {
         price: "$0.001",
         network: "hedera-testnet",
@@ -75,12 +50,6 @@ app.get("/weather", (req, res) => {
   });
 });
 
-app.get("/premium/content", (req, res) => {
-  res.send({
-    content: "This is premium content",
-  });
-});
-
 // Hedera endpoints
 app.get("/hedera-usdc", (req, res) => {
   res.send({
@@ -108,8 +77,7 @@ app.get("/hedera-native", (req, res) => {
 
 app.listen(4021, () => {
   console.log(`Server listening at http://localhost:${4021}`);
-  console.log("  GET /weather - Base Sepolia USDC payment ($0.01)");
-  console.log("  GET /premium/content - Base Sepolia token payment");
+  console.log("  GET /weather");
   console.log("  GET /hedera-usdc - Hedera testnet USDC payment ($0.05)");
   console.log("  GET /hedera-native - Hedera testnet HBAR payment (0.5 HBAR)");
 });
