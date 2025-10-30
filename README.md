@@ -1,275 +1,183 @@
-# x402 payments protocol
+# x402 Hedera Hackathon Starter
 
-> "1 line of code to accept digital dollars. No fee, 2 second settlement, $0.001 minimum payment."
+> Build and demo paywalled experiences on Hedera testnet in minutes. Local development only – not production ready.
 
-```typescript
-app.use(
-  // How much you want to charge, and where you want the funds to land
-  paymentMiddleware("0xYourAddress", { "/your-endpoint": "$0.01" })
-);
-// That's it! See examples/typescript/servers/express.ts for a complete example. Instruction below for running on base-sepolia.
+This repo packages everything you need to stand up the x402 payment flow on Hedera during a hackathon: a facilitator, a token-gated resource server, and a sample client that pays for access.
+
+## Prerequisites
+
+- Node.js 18+ and `pnpm` 10.7+ (`corepack enable pnpm` if you need to install it)
+- `git` and a POSIX shell (`bash`/`zsh`)
+- Hedera **ECDSA** testnet account funded with HBAR and associated with USDC `0.0.429274`
+- Basic familiarity with editing `.env` files on your machine
+
+Need help preparing the Hedera account? Jump to [Prepare your Hedera testnet wallet](#prepare-your-hedera-testnet-wallet).
+
+## Quick Start (TL;DR)
+
+```bash
+git clone https://github.com/hedera-dev/x402-hedera.git
+cd x402-hedera
+chmod +x setup.sh
+./setup.sh
 ```
 
-## Philosophy
+Then open three terminals, all from the repo root:
 
-Payments on the internet are fundamentally flawed. Credit Cards are high friction, hard to accept, have minimum payments that are far too high, and don't fit into the programmatic nature of the internet.
-It's time for an open, internet-native form of payments. A payment rail that doesn't have high minimums + % based fee. Payments that are amazing for humans and AI agents.
+1. **Facilitator** – `cd examples/typescript/facilitator && cp .env-local .env` → fill `HEDERA_ACCOUNT_ID` + `HEDERA_PRIVATE_KEY` → `pnpm dev`
+2. **Resource server** – `cd examples/typescript/servers/express && cp .env-local .env` → set `ADDRESS` to the account that receives funds → `pnpm dev`
+3. **Client** – `cd examples/typescript/clients/axios && cp .env-local .env` → set `PRIVATE_KEY` for the paying account → `pnpm dev`
 
-## Principles
+You should see successful payments logged in all three terminals as the client purchases `/hedera-usdc` and `/hedera-native`.
 
-- **Open standard:** the x402 protocol will never force reliance on a single party
-- **HTTP Native:** x402 is meant to seamlessly complement the existing HTTP request made by traditional web services, it should not mandate additional requests outside the scope of a typical client / server flow.
-- **Chain and token agnostic:** we welcome contributions that add support for new chains, signing standards, or schemes, so long as they meet our acceptance criteria laid out in [CONTRIBUTING.md](https://github.com/coinbase/x402/blob/main/CONTRIBUTING.md)
-- **Trust minimizing:** all payment schemes must not allow for the facilitator or resource server to move funds, other than in accordance with client intentions
-- **Easy to use:** x402 needs to be 10x better than existing ways to pay on the internet. This means abstracting as many details of crypto as possible away from the client and resource server, and into the facilitator. This means the client/server should not need to think about gas, rpc, etc.
+## Prepare your Hedera testnet wallet
 
-## Ecosystem
+1. Create or log into the [Hedera Developer Portal](https://portal.hedera.com) and generate an **ECDSA** testnet account.
+2. Fund the account with testnet HBAR from the portal faucet.
+3. Associate USDC token `0.0.429274` with the wallet. Most wallets have an “Associate Token” action where you paste the token ID, or you can run this [Hedera Portal Script](<https://portal.hedera.com/playground?code=const%20%7B%0A%20%20%20%20AccountId%2C%0A%20%20%20%20PrivateKey%2C%0A%20%20%20%20Client%2C%0A%20%20%20%20TokenAssociateTransaction%0A%20%20%7D%20%3D%20require(%22%40hashgraph%2Fsdk%22)%3B%20%2F%2F%20v2.64.5%0A%0Aasync%20function%20main()%20%7B%0A%20%20let%20client%3B%0A%20%20try%20%7B%0A%20%20%20%20%2F%2F%20Your%20account%20ID%20and%20private%20key%20from%20string%20value%0A%20%20%20%20const%20MY_ACCOUNT_ID%20%3D%20AccountId.fromString(%22%3CAccountId%3E%22)%3B%0A%20%20%20%20const%20MY_PRIVATE_KEY%20%3D%20PrivateKey.fromStringECDSA(%22%3CPrivateKey%3E%22)%3B%0A%0A%20%20%20%20%2F%2F%20Pre-configured%20client%20for%20testnet%0A%20%20%20%20client%20%3D%20Client.forTestnet()%3B%0A%0A%20%20%20%20%2F%2FSet%20the%20operator%20with%20the%20account%20ID%20and%20private%20key%0A%20%20%20%20client.setOperator(MY_ACCOUNT_ID%2C%20MY_PRIVATE_KEY)%3B%0A%0A%20%20%20%20%2F%2F%20Start%20your%20code%20here%0A%20%20%20%20const%20tokenId%20%3D%20'0.0.429274'%0A%20%20%20%20%0A%20%20%20%20%2F%2FAssociate%20a%20token%20to%20an%20account%20and%20freeze%20the%20unsigned%20transaction%20for%20signing%0A%20%20%20%20const%20txTokenAssociate%20%3D%20await%20new%20TokenAssociateTransaction()%0A%20%20%20%20%20%20.setAccountId(MY_ACCOUNT_ID)%0A%20%20%20%20%20%20.setTokenIds(%5BtokenId%5D)%20%2F%2FFill%20in%20the%20token%20ID%0A%20%20%20%20%20%20.freezeWith(client)%3B%0A%0A%20%20%20%20%2F%2FSign%20with%20the%20private%20key%20of%20the%20account%20that%20is%20being%20associated%20to%20a%20token%20%0A%20%20%20%20const%20signTxTokenAssociate%20%3D%20await%20txTokenAssociate.sign(MY_PRIVATE_KEY)%3B%0A%0A%20%20%20%20%2F%2FSubmit%20the%20transaction%20to%20a%20Hedera%20network%20%20%20%20%0A%20%20%20%20const%20txTokenAssociateResponse%20%3D%20await%20signTxTokenAssociate.execute(client)%3B%0A%0A%20%20%20%20%2F%2FRequest%20the%20receipt%20of%20the%20transaction%0A%20%20%20%20const%20receiptTokenAssociateTx%20%3D%20await%20txTokenAssociateResponse.getReceipt(client)%3B%0A%0A%20%20%20%20%2F%2FGet%20the%20transaction%20consensus%20status%0A%20%20%20%20const%20statusTokenAssociateTx%20%3D%20receiptTokenAssociateTx.status%3B%0A%0A%20%20%20%20%2F%2FGet%20the%20Transaction%20ID%0A%20%20%20%20const%20txTokenAssociateId%20%3D%20txTokenAssociateResponse.transactionId.toString()%3B%0A%0A%20%20%20%20console.log(%22---------------------------------%20Token%20Associate%20---------------------------------%22)%3B%0A%20%20%20%20console.log(%22Receipt%20status%20%20%20%20%20%20%20%20%20%20%20%3A%22%2C%20statusTokenAssociateTx.toString())%3B%0A%20%20%20%20console.log(%22Transaction%20ID%20%20%20%20%20%20%20%20%20%20%20%3A%22%2C%20txTokenAssociateId)%3B%0A%20%20%20%20console.log(%22Hashscan%20URL%20%20%20%20%20%20%20%20%20%20%20%20%20%3A%22%2C%20%22https%3A%2F%2Fhashscan.io%2Ftestnet%2Ftransaction%2F%22%20%2B%20txTokenAssociateId)%3B%0A%20%20%20%20%20%20%0A%20%20%7D%20catch%20(error)%20%7B%0A%20%20%20%20console.error(error)%3B%0A%20%20%7D%20finally%20%7B%0A%20%20%20%20if%20(client)%20client.close()%3B%0A%20%20%7D%0A%7D%0A%0Amain()%3B%0A&language=javascript>).
+4. Visit the [Circle testnet faucet](https://faucet.circle.com), choose **Hedera Testnet**, enter your account ID, and request USDC. The facilitator will spend from this account when verifying payments.
 
-The x402 ecosystem is growing! Check out our [ecosystem page](https://x402.org/ecosystem) to see projects building with x402, including:
+Keep both the account ID (`0.0.x`) and the private key handy; you will need them in the next steps.
 
-- Client-side integrations
-- Services and endpoints
-- Ecosystem infrastructure and tooling
-- Learning and community resources
+## Install project dependencies
 
-Want to add your project to the ecosystem? See our [demo site README](https://github.com/coinbase/x402/tree/main/typescript/site#adding-your-project-to-the-ecosystem) for detailed instructions on how to submit your project.
+The `setup.sh` script installs and builds the monorepo packages and the TypeScript examples.
 
-**Roadmap:** see [ROADMAP.md](https://github.com/coinbase/x402/blob/main/ROADMAP.md)
+```bash
+chmod +x setup.sh
+./setup.sh
+```
 
-## Terms:
+If you prefer to do it manually:
 
-- `resource`: Something on the internet. This could be a webpage, file server, RPC service, API, any resource on the internet that accepts HTTP / HTTPS requests.
-- `client`: An entity wanting to pay for a resource.
-- `facilitator server`: A server that facilitates verification and execution of on-chain payments.
-- `resource server`: An HTTP server that provides an API or other resource for a client.
+```bash
+cd typescript && pnpm install && pnpm build
+cd ../examples/typescript && pnpm install && pnpm build
+```
 
-## Technical Goals:
+## Run the facilitator
 
-- Permissionless and secure for clients and servers
-- Gasless for client and resource servers
-- Minimal integration for the resource server and client (1 line for the server, 1 function for the client)
-- Ability to trade off speed of response for guarantee of payment
-- Extensible to different payment flows and chains
+Terminal 1:
 
-## V1 Protocol
+```bash
+cd examples/typescript/facilitator
+cp .env-local .env
+```
 
-The `x402` protocol is a chain agnostic standard for payments on top of HTTP, leverage the existing `402 Payment Required` HTTP status code to indicate that a payment is required for access to the resource.
+Update `.env` with your fee payer credentials:
 
-It specifies:
+- `HEDERA_ACCOUNT_ID` – account that signs and pays fees
+- `HEDERA_PRIVATE_KEY` – private key for the account (ECDSA)
+- Optional `PORT` (defaults to `3002`)
 
-1. A schema for how servers can respond to clients to facilitate payment for a resource (`PaymentRequirements`)
-2. A standard header `X-PAYMENT` that is set by clients paying for resources
-3. A standard schema and encoding method for data in the `X-PAYMENT` header
-4. A recommended flow for how payments should be verified and settled by a resource server
-5. A REST specification for how a resource server can perform verification and settlement against a remote 3rd party server (`facilitator`)
-6. A specification for a `X-PAYMENT-RESPONSE` header that can be used by resource servers to communicate blockchain transactions details to the client in their HTTP response
+Start the facilitator:
 
-### V1 Protocol Sequencing
+```bash
+pnpm dev
+```
 
-![](./static/x402-protocol-flow.png)
+You should see `Server listening on http://localhost:3002`.
 
-The following outlines the flow of a payment using the `x402` protocol. Note that steps (1) and (2) are optional if the client already knows the payment details accepted for a resource.
+## Run the resource server
 
-1. `Client` makes an HTTP request to a `resource server`.
+Terminal 2:
 
-2. `Resource server` responds with a `402 Payment Required` status and a `Payment Required Response` JSON object in the response body.
+```bash
+cd examples/typescript/servers/express
+cp .env-local .env
+```
 
-3. `Client` selects one of the `paymentRequirements` returned by the server response and creates a `Payment Payload` based on the `scheme` of the `paymentRequirements` they have selected.
+Configure `.env`:
 
-4. `Client` sends the HTTP request with the `X-PAYMENT` header containing the `Payment Payload` to the resource server.
+- `FACILITATOR_URL` – typically `http://localhost:3002`
+- `NETWORK` – leave as `hedera-testnet`
+- `ADDRESS` – Hedera account that will receive the payment (can match the facilitator account or be different)
 
-5. `Resource server` verifies the `Payment Payload` is valid either via local verification or by POSTing the `Payment Payload` and `Payment Requirements` to the `/verify` endpoint of a `facilitator server`.
+Start the server:
 
-6. `Facilitator server` performs verification of the object based on the `scheme` and `network` of the `Payment Payload` and returns a `Verification Response`.
+```bash
+pnpm dev
+```
 
-7. If the `Verification Response` is valid, the resource server performs the work to fulfill the request. If the `Verification Response` is invalid, the resource server returns a `402 Payment Required` status and a `Payment Required Response` JSON object in the response body.
+The server exposes:
 
-8. `Resource server` either settles the payment by interacting with a blockchain directly, or by POSTing the `Payment Payload` and `Payment PaymentRequirements` to the `/settle` endpoint of a `facilitator server`.
+- `GET /weather` – free endpoint
+- `GET /hedera-usdc` – pay $0.001 USDC on Hedera
+- `GET /hedera-native` – pay 0.5 HBAR natively
 
-9. `Facilitator server` submits the payment to the blockchain based on the `scheme` and `network` of the `Payment Payload`.
+## Run the client
 
-10. `Facilitator server` waits for the payment to be confirmed on the blockchain.
+Terminal 3:
 
-11. `Facilitator server` returns a `Payment Execution Response` to the resource server.
+```bash
+cd examples/typescript/clients/axios
+cp .env-local .env
+```
 
-12. `Resource server` returns a `200 OK` response to the `Client` with the resource they requested as the body of the HTTP response, and a `X-PAYMENT-RESPONSE` header containing the `Settlement Response` as Base64 encoded JSON if the payment was executed successfully.
+Set `RESOURCE_SERVER_URL` (default `http://localhost:4021`), `PRIVATE_KEY` for the paying account, and leave `ENDPOINT_PATH` as `/hedera-native` to exercise native HBAR payments. You can switch it to `/hedera-usdc` to test USDC payments instead.
 
-### Type Specifications
+Run the client:
 
-#### Data types
+```bash
+pnpm dev
+```
 
-**Payment Required Response**
+The script will:
 
-```json5
+1. Request the protected endpoint
+2. Receive a `402 Payment Required`
+3. Pay through the facilitator
+4. Retry and receive the gated response
+
+Expect to see logs showing the transaction hash and the JSON payload returned from the server.
+
+## Verify everything is wired up
+
+- The facilitator terminal prints `verify` and `settle` calls as they succeed.
+- The resource server logs incoming payments and successful responses.
+- The client prints the final response body, for example:
+
+```json
 {
-  // Version of the x402 payment protocol
-  x402Version: int,
-
-  // List of payment requirements that the resource server accepts. A resource server may accept on multiple chains, or in multiple currencies.
-  accepts: [paymentRequirements]
-
-  // Message from the resource server to the client to communicate errors in processing payment
-  error: string
+  "message": "You paid 0.5 HBAR natively!",
+  "data": {
+    "premium_content": "Exclusive Hedera network data with native payment",
+    "paid_with": "HBAR",
+    "amount_hbar": "0.5"
+  }
 }
 ```
 
-**paymentRequirements**
+You can also replay the flow manually with `curl`:
 
-```json5
-{
-  // Scheme of the payment protocol to use
-  scheme: string;
-
-  // Network of the blockchain to send payment on
-  network: string;
-
-  // Maximum amount required to pay for the resource in atomic units of the asset
-  maxAmountRequired: uint256 as string;
-
-  // URL of resource to pay for
-  resource: string;
-
-  // Description of the resource
-  description: string;
-
-  // MIME type of the resource response
-  mimeType: string;
-
-  // Output schema of the resource response
-  outputSchema?: object | null;
-
-  // Address to pay value to
-  payTo: string;
-
-  // Maximum time in seconds for the resource server to respond
-  maxTimeoutSeconds: number;
-
-  // Address of the EIP-3009 compliant ERC20 contract
-  asset: string;
-
-  // Extra information about the payment details specific to the scheme
-  // For `exact` scheme on a EVM network, expects extra to contain the records `name` and `version` pertaining to asset
-  extra: object | null;
-}
+```bash
+curl -i http://localhost:4021/hedera-usdc
 ```
 
-**`Payment Payload`** (included as the `X-PAYMENT` header in base64 encoded json)
+The first response will be `402 Payment Required`. Use the client to handle the payment, or craft your own request with the `X-PAYMENT` header if you are exploring deeper integrations.
 
-```json5
-{
-  // Version of the x402 payment protocol
-  x402Version: number;
+## Troubleshooting
 
-  // scheme is the scheme value of the accepted `paymentRequirements` the client is using to pay
-  scheme: string;
+- `TOKEN_NOT_ASSOCIATED` – make sure the paying account associated USDC `0.0.429274`.
+- `INVALID_SIGNATURE` – confirm you are using an ECDSA account and the private key matches the ID.
+- `insufficient payer balance` – top up HBAR via the Hedera portal and USDC via the Circle faucet.
+- `.env` not loading – double-check you renamed `.env-local` to `.env` in each directory.
+- Ports busy – adjust `PORT` in the facilitator `.env` or the server script.
 
-  // network is the network id of the accepted `paymentRequirements` the client is using to pay
-  network: string;
+## Project layout essentials
 
-  // payload is scheme dependent
-  payload: <scheme dependent>;
-}
-```
+- `setup.sh` – installs and builds the TypeScript packages and examples.
+- `examples/typescript/facilitator` – Hedera facilitator reference implementation.
+- `examples/typescript/servers/express` – paywalled Express server with Hedera endpoints.
+- `examples/typescript/clients/axios` – sample client that pays via x402.
+- `specs/` – protocol specs if you want to dig into the internals.
 
-#### Facilitator Types & Interface
+Run `pnpm test` from `typescript/` if you want to execute the library test suite.
 
-A `facilitator server` is a 3rd party service that can be used by a `resource server` to verify and settle payments, without the `resource server` needing to have access to a blockchain node or wallet.
+## Learn more about x402
 
-**POST /verify**. Verify a payment with a supported scheme and network:
+- [x402.org](https://x402.org) – protocol overview and ecosystem
+- [Protocol specs](./specs) – full request/response formats
+- [ROADMAP.md](./ROADMAP.md) – upcoming protocol milestones
 
-- Request body JSON:
-  ```json5
-  {
-    x402Version: number;
-    paymentHeader: string;
-    paymentRequirements: paymentRequirements;
-  }
-  ```
-- Response:
-  ```json5
-  {
-    isValid: boolean;
-    invalidReason: string | null;
-  }
-  ```
-
-**POST /settle**. Settle a payment with a supported scheme and network:
-
-- Request body JSON:
-
-  ```json5
-  {
-    x402Version: number;
-    paymentHeader: string;
-    paymentRequirements: paymentRequirements;
-  }
-  ```
-
-- Response:
-
-  ```json5
-  {
-    // Whether the payment was successful
-    success: boolean;
-
-    // Error message from the facilitator server
-    error: string | null;
-
-    // Transaction hash of the settled payment
-    txHash: string | null;
-
-    // Network id of the blockchain the payment was settled on
-    networkId: string | null;
-  }
-  ```
-
-**GET /supported**. Get supported payment schemes and networks:
-
-- Response:
-  ```json5
-  {
-    kinds: [
-      {
-        "scheme": string,
-        "network": string,
-      }
-    ]
-  }
-  ```
-
-### Schemes
-
-A scheme is a logical way of moving money.
-
-Blockchains allow for a large number of flexible ways to move money. To help facilitate an expanding number of payment use cases, the `x402` protocol is extensible to different ways of settling payments via its `scheme` field.
-
-Each payment scheme may have different operational functionality depending on what actions are necessary to fulfill the payment.
-For example `exact`, the first scheme shipping as part of the protocol, would have different behavior than `upto`. `exact` transfers a specific amount (ex: pay $1 to read an article), while a theoretical `upto` would transfer up to an amount, based on the resources consumed during a request (ex: generating tokens from an LLM).
-
-See `specs/schemes` for more details on schemes, and see `specs/schemes/exact/scheme_exact_evm.md` to see the first proposed scheme for exact payment on EVM chains.
-
-### Schemes vs Networks
-
-Because a scheme is a logical way of moving money, the way a scheme is implemented can be different for different blockchains. (ex: the way you need to implement `exact` on Ethereum is very different from the way you need to implement `exact` on Solana).
-
-Clients and facilitators must explicitly support different `(scheme, network)` pairs in order to be able to create proper payloads and verify / settle payments.
-
-## Running example
-
-**Requirements:** Node.js v24 or higher
-
-1. From `examples/typescript` run `pnpm install` and `pnpm build` to ensure all dependent packages and examples are setup.
-
-2. Select a server, i.e. express, and `cd` into that example. Add your server's ethereum address to get paid to into the `.env` file, and then run `pnpm dev` in that directory.
-
-3. Select a client, i.e. axios, and `cd` into that example. Add your private key for the account making payments into the `.env` file, and then run `pnpm dev` in that directory.
-
-You should see activities in the client terminal, which will display a weather report.
-
-## Running tests
-
-1. Navigate to the typescript directory: `cd typescript`
-2. Install dependencies: `pnpm install`
-3. Run the unit tests: `pnpm test`
-
-This will run the unit tests for the x402 packages.
+Questions during the hackathon? Drop into the event Discord or open an issue, and share what you are building!
