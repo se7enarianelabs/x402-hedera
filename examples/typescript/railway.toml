@@ -1,0 +1,11 @@
+[build]
+
+builder = "nixpacks"
+buildCommand = "pnpm build"
+
+[deploy]
+
+startCommand = "pnpm --filter facilitator-example dev"
+healthcheckPath = "/supported"
+healthcheckTimeout = 100
+restartPolicyType = "on_failure"
